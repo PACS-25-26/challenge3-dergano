@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <cstdlib>
  
 class matrix
 {
@@ -50,6 +51,26 @@ public:
   };
 
   matrix(matrix const &) = default;
+
+  matrix &
+  operator=(matrix const &other)
+  {
+    if (this == &other)
+      return *this;
+    assert(rows == other.rows && cols == other.cols);
+    data       = other.data;
+    p          = other.p;
+    factorized = other.factorized;
+    return *this;
+  }
+
+  void
+  randomize()
+  {
+    for (size_t i = 0; i < data.size(); ++i)
+      data[i] = static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
+    factorized = false;
+  }
 
   unsigned int
   get_rows() const

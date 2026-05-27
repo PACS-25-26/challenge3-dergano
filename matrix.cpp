@@ -1,20 +1,16 @@
 #include "matrix.hpp"
 
-#include <Eigen/Dense>
-
 #include <algorithm>
 #include <cassert>
 
 matrix
 matrix::transpose() const
 {
-  matrix retval(*this);
+  matrix retval(get_cols(), get_rows());
 
-  Eigen::Map<Eigen::MatrixXd> eigen_retval(retval.get_data(),
-                                           retval.get_rows(),
-                                           retval.get_cols());
-
-  eigen_retval.transposeInPlace();
+  for (unsigned int ii = 0; ii < get_rows(); ++ii)
+    for (unsigned int jj = 0; jj < get_cols(); ++jj)
+      retval(jj, ii) = (*this)(ii, jj);
 
   return retval;
 }
@@ -23,21 +19,12 @@ matrix operator*(const matrix &A, const matrix &B)
 {
   assert(A.get_cols() == B.get_rows());
 
-  Eigen::Map<const Eigen::MatrixXd> eigen_A(A.get_data(),
-                                            A.get_rows(),
-                                            A.get_cols());
-
-  Eigen::Map<const Eigen::MatrixXd> eigen_B(B.get_data(),
-                                            B.get_rows(),
-                                            B.get_cols());
-
   matrix retval(A.get_rows(), B.get_cols());
 
-  Eigen::Map<Eigen::MatrixXd> eigen_retval(retval.get_data(),
-                                           retval.get_rows(),
-                                           retval.get_cols());
-
-  eigen_retval = eigen_A * eigen_B;
+  for (unsigned int ii = 0; ii < A.get_rows(); ++ii)
+    for (unsigned int jj = 0; jj < B.get_cols(); ++jj)
+      for (unsigned int kk = 0; kk < A.get_cols(); ++kk)
+        retval(ii, jj) += A(ii, kk) * B(kk, jj);
 
   return retval;
 }
