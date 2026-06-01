@@ -29,17 +29,6 @@ int main(int argc, char *argv[])
     if (rank == 0){
         std::cout << "Matrix size: " << argv[1] << std::endl;
         n = std::stoi(argv[1]);
-        std::vector<double> Uk(n * n, 0.0);
-        std::vector<double> Uk1(n * n, 0.0);
-
-        // Initialize Uk with initial conditions
-        for (int i = 0; i < n; ++i)
-        {
-            for (int j = 0; j < n; ++j)
-            {
-                Uk[i * n + j] = 0.0; // Initial condition, can be modified in the extra
-            }
-        }
     }
     
     MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
