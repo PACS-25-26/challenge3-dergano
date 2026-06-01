@@ -1,7 +1,7 @@
 #include "matrix.hpp"
-
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 
 matrix
 matrix::transpose() const
