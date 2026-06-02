@@ -1,6 +1,7 @@
 #include<iostream>
 #include "matrix.hpp"
 #include <mpi.h>
+#include <fstream>
 #include <chrono>
 #include <string>
 #include <vector>
@@ -8,6 +9,7 @@
 
 
 double f(double x, double y);
+double uexact(double x, double y);
 
 int main(int argc, char *argv[])
 {
@@ -25,12 +27,22 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
         }    
     
-        int n;
+        int k;
     if (rank == 0){
         std::cout << "Matrix size: " << argv[1] << std::endl;
-        n = std::stoi(argv[1]);
+        k = std::stoi(argv[1]);
     }
-    
+
+std::vector<std::size_t> nume(k);
+for (int i = 0; i < k; ++i){
+    nume[i] = std::pow(2, i + 2);
+}
+
+for (auto &n : nume){
+    if (rank == 0){
+        std::cout << "Running for n = " << n << std::endl;
+        std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    }
     MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
     double h = 1.0 / (n - 1);
     int rest = n % size;
@@ -122,10 +134,70 @@ int main(int argc, char *argv[])
         }
 
     }
+
     if (rank == 0 && err >= tol)
     {
         std::cout << "Did not converge in " << max_iters << " iterations. Final error: " << err << std::endl;
     }
+
+    std::vector<double> global_Uk;
+    std::vector<int> recvcounts(size);
+    std::vector<int> displs(size);
+
+    if (rank == 0)
+    {
+        global_Uk.resize(n * n); 
+        int current_j = 0;
+        
+        for (int i = 0; i < size; ++i)
+        {
+            int rows_for_rank_i = (n / size) + (i < rest ? 1 : 0);
+            recvcounts[i] = rows_for_rank_i * n;
+            displs[i] = current_j;
+            current_j += recvcounts[i];
+        }
+    }
+
+    MPI_Gatherv(local_Uk.data(), local_rows * n, MPI_DOUBLE,
+                global_Uk.data(), recvcounts.data(), displs.data(), MPI_DOUBLE,
+                0, MPI_COMM_WORLD);
+
+    if (rank == 0)
+    {
+        std::ofstream out("laplace_solution.vtk");
+        
+        //Intestazione obbligatoria
+        out << "# vtk DataFile Version 3.0\n";
+        out << "Laplace equation solution\n";
+        out << "ASCII\n";
+        
+        //Definizione della griglia spaziale
+        out << "DATASET STRUCTURED_POINTS\n";
+        out << "DIMENSIONS " << n << " " << n << " 1\n"; 
+        out << "ORIGIN 0 0 0\n";
+        out << "SPACING " << h << " " << h << " 1\n";
+        
+        // I dati della soluzione
+        out << "POINT_DATA " << n * n << "\n";
+        out << "SCALARS u double 1\n";
+        out << "LOOKUP_TABLE default\n";
+        
+        // Scrittura del vettore globale
+        for (std::size_t i = 0; i < n * n; ++i)
+        {
+            out << global_Uk[i] << "\n";
+        }
+        
+        out.close();
+        std::cout << "Risultato esportato in laplace_solution.vtk" << std::endl;
+    }  
+    if (rank == 0) {
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end - start;
+        std::cout << "Parallel execution completed for n = " << n << std::endl;
+        std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
+    }          
+}
 
     MPI_Finalize();
     return EXIT_SUCCESS;
@@ -135,4 +207,9 @@ int main(int argc, char *argv[])
 double f(double x, double y)
 {
     return 8 * (M_PI * M_PI) * std::sin(2 * M_PI * x) * std::sin(2 * M_PI * y);
+}
+
+double uexact(double x, double y)
+{
+    return std::sin(2 * M_PI * x) * std::sin(2 * M_PI * y);
 }
