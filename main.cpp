@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 
 std::vector<std::size_t> nume(k);
 for (int i = 0; i < k; ++i){
-    nume[i] = std::pow(2, i + 2);
+    nume[i] = std::pow(2, i + 4);
 }
 
 for (auto &n : nume){
