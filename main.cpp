@@ -1,11 +1,11 @@
 #include<iostream>
-#include "matrix.hpp"
 #include <mpi.h>
 #include <fstream>
 #include <chrono>
 #include <string>
 #include <vector>
 #include <cmath>
+#include <omp.h>
 
 
 double f(double x, double y);
@@ -19,26 +19,29 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     
-    if (argc != 2)
+    if (argc != 3)
         {
         if (rank == 0)
-            std::cerr << "Usage: " << argv[0] << " <matrix_size>" << std::endl;
+            std::cerr << "Usage: " << argv[0] << " <matrix_size> <num_threads>" << std::endl;
         MPI_Finalize();
         return EXIT_FAILURE;
         }    
     
-        int k;
+    int k;
+    int num_threads;
     if (rank == 0){
-        std::cout << "Matrix size: " << argv[1] << std::endl;
         k = std::stoi(argv[1]);
+        num_threads = std::stoi(argv[2]);
     }
+    MPI_Bcast(&num_threads, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    omp_set_num_threads(num_threads);
 
-std::vector<std::size_t> nume(k);
-for (int i = 0; i < k; ++i){
-    nume[i] = std::pow(2, i + 4);
+std::vector<std::size_t> num(5);
+for (int i = 0; i < 5; ++i){
+    num[i] = std::pow(2, i + 4);
 }
 
-for (auto &n : nume){
+for (auto &n : num){
     if (rank == 0){
         std::cout << "Running for n = " << n << std::endl;
         std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
@@ -83,7 +86,7 @@ for (auto &n : nume){
         }
 
         // Calcolo di Uk1
-
+        #pragma omp parallel for num_threads(num_threads)
         for (std::size_t j = 0; j < local_rows * n; ++j)
         {
             double x = (j % n) * h;
@@ -107,13 +110,15 @@ for (auto &n : nume){
                 local_Uk1[j] = 0.25 * (left + right + up + down + (h * h) * f(x, y)); 
             }
         }
+
         // Calcolo dell'errore
         double local_sum = 0.0;
+        #pragma omp parallel for reduction(+:local_sum) num_threads(num_threads)
         for (std::size_t j = 0; j < local_rows * n; ++j)
         {
             local_sum += std::pow(local_Uk1[j] - local_Uk[j], 2);
-            local_Uk[j] = local_Uk1[j]; // Piccolo trucco: aggiorna Uk già qui per risparmiare un intero ciclo for!
-        }
+            local_Uk[j] = local_Uk1[j];
+        } 
 
         MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         

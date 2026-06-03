@@ -1,0 +1,20 @@
+CXX = mpicxx
+CXXFLAGS = -Wall -O3 -fopenmp
+LDFLAGS = -fopenmp
+
+# name of the executable
+TARGET = laplace
+
+SRCS = main.cpp 
+OBJS = $(SRCS:.cpp=.o)
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CXX) $(LDFLAGS) -o $@ $^
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJS) $(TARGET)
