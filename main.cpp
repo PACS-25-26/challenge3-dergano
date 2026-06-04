@@ -1,4 +1,4 @@
-#include<iostream>
+#include <iostream>
 #include <mpi.h>
 #include <fstream>
 #include <chrono>
@@ -6,9 +6,9 @@
 #include <vector>
 #include <cmath>
 #include <omp.h>
+#include "muParser.h"
 
 
-double f(double x, double y);
 double uexact(double x, double y);
 
 int main(int argc, char *argv[])
@@ -19,10 +19,10 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     
-    if (argc != 3)
+    if (argc != 4)
         {
         if (rank == 0)
-            std::cerr << "Usage: " << argv[0] << " <matrix_size> <num_threads>" << std::endl;
+            std::cerr << "Usage: " << argv[0] << " <matrix_size> <num_threads> <function>" << std::endl;
         MPI_Finalize();
         return EXIT_FAILURE;
         }    
@@ -36,15 +36,23 @@ int main(int argc, char *argv[])
     MPI_Bcast(&num_threads, 1, MPI_INT, 0, MPI_COMM_WORLD);
     omp_set_num_threads(num_threads);
 
+    std::string f = argv[3];
+    double x = 0.0;
+    double y = 0.0;
+    mu::Parser parser;
+    parser.DefineVar("x", &x);
+    parser.DefineVar("y", &y);
+    parser.SetExpr(f);
+
 std::vector<std::size_t> num(5);
 for (int i = 0; i < 5; ++i){
     num[i] = std::pow(2, i + 4);
 }
 
 for (auto &n : num){
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     if (rank == 0){
         std::cout << "Running for n = " << n << std::endl;
-        std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     }
     MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
     double h = 1.0 / (n - 1);
@@ -85,8 +93,16 @@ for (auto &n : num){
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
 
+        // Evaluation of f: we have race condition if if we parallelize it
+        std::vector<double> local_f(local_rows * n, 0.0);
+        for (std::size_t j = 0; j < local_rows * n; ++j) {
+            x = (j % n) * h;
+            y = (local_start / n + j / n) * h;
+            local_f[j] = parser.Eval();
+        }
+
         // Calcolo di Uk1
-        #pragma omp parallel for num_threads(num_threads)
+        #pragma omp parallel for 
         for (std::size_t j = 0; j < local_rows * n; ++j)
         {
             double x = (j % n) * h;
@@ -107,13 +123,13 @@ for (auto &n : num){
                 double left  = local_Uk[j - 1];
                 double right = local_Uk[j + 1];
 
-                local_Uk1[j] = 0.25 * (left + right + up + down + (h * h) * f(x, y)); 
+                local_Uk1[j] = 0.25 * (left + right + up + down + (h * h) * local_f[j]); 
             }
         }
 
         // Calcolo dell'errore
         double local_sum = 0.0;
-        #pragma omp parallel for reduction(+:local_sum) num_threads(num_threads)
+        #pragma omp parallel for reduction(+:local_sum) 
         for (std::size_t j = 0; j < local_rows * n; ++j)
         {
             local_sum += std::pow(local_Uk1[j] - local_Uk[j], 2);
@@ -131,11 +147,6 @@ for (auto &n : num){
                 std::cout << "Converged in " << iter + 1 << " iterations with error: " << err << std::endl;
             }
             break; 
-        }
-
-        for (std::size_t j = 0; j < local_rows * n; ++j)
-        {
-            local_Uk[j]= local_Uk1[j];
         }
 
     }
@@ -208,11 +219,6 @@ for (auto &n : num){
     return EXIT_SUCCESS;
 }
 
-
-double f(double x, double y)
-{
-    return 8 * (M_PI * M_PI) * std::sin(2 * M_PI * x) * std::sin(2 * M_PI * y);
-}
 
 double uexact(double x, double y)
 {

@@ -1,6 +1,7 @@
 CXX = mpicxx
-CXXFLAGS = -Wall -O3 -fopenmp
-LDFLAGS = -fopenmp
+CXXFLAGS = -Wall -O3 -fopenmp 
+LDFLAGS = -fopenmp 
+LDLIBS = -lmuparser
 
 # name of the executable
 TARGET = laplace
@@ -11,7 +12,7 @@ OBJS = $(SRCS:.cpp=.o)
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(LDFLAGS) -o $@ $^
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
