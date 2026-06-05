@@ -111,8 +111,6 @@ int main(int argc, char *argv[])
             }
         }
 
-        double local_conv_crit = 0.0;
-        double local_error = 0.0;
         double conv_crit = tol + 1.0;   
         double local_tol = 1e-5;
         int max_local_iters = 500;
