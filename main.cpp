@@ -173,6 +173,9 @@ int main(int argc, char *argv[])
             MPI_Allreduce(&local_conv_crit, &conv_crit, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             MPI_Allreduce(&local_error, &error, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             
+
+            conv_crit = std::sqrt(conv_crit*h);
+            error = std::sqrt(error*h);
             errors.push_back(std::sqrt(error)); 
 
             if (conv_crit < tol)
