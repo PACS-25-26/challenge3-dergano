@@ -38,6 +38,7 @@ int main(int argc, char *argv[])
 
     std::string f = argv[3];
     std::string boundary = argv[4];
+    
 
     std::vector<std::size_t> num(5);
     for (int i = 0; i < 5; ++i){
@@ -65,8 +66,9 @@ int main(int argc, char *argv[])
         std::vector<double> postrow_Uk(n, 0.0);
 
         // Evaluation of forcing and boundary function, both given by the user (Parallel implementation)
-        std::vector<double> local_f(local_rows * n, 0.0);
-        std::vector<double> local_boundary_function(local_rows * n, 0.0);
+        std::vector<double> local_f(local_rows * n, 0.0); 
+        std::vector<double> local_boundary(local_rows * n, 0.0);
+        std::vector<double> local_true_solution(local_rows * n, 0.0);
         #pragma omp parallel 
         {
             double thread_x = 0.0;
@@ -92,20 +94,28 @@ int main(int argc, char *argv[])
                 thread_y = (local_start / n + j / n) * h;
                 std::size_t col = j % n;
                 std::size_t global_row = local_start / n + j / n;
-                
+                local_true_solution[j] = uexact(thread_x, thread_y);
+
                 if (global_row == 0 || global_row == n - 1 || col == 0 || col == n - 1) {
-                    local_boundary_function[j] = thread_parser_boundary.Eval();
+                    local_boundary[j] = thread_parser_boundary.Eval();
                 }
                 else {
                     local_f[j] = thread_parser_forcing.Eval();
                 }      
             }
+            
+            #pragma omp parallel for
+            for (std::size_t j = 0; j< local_rows * n; ++j) {
+                local_f[j] += local_boundary[j];
+            }
         }
 
         std::size_t max_iters = 10000;
         double tol = 1e-6;
-        double err = tol + 1.0;
+        std::vector<double> errors(num.size(), tol + 1.0);
+        std::vector<double> true_errors(num.size(), 0.0);
         double sum = 0.0;
+        double true_sum = 0.0;
 
         for (std::size_t iter = 0; iter < max_iters; ++iter)
         {
@@ -134,7 +144,7 @@ int main(int argc, char *argv[])
 
                 if(global_row == 0 || global_row == n - 1 || col == 0 || col == n - 1)
                 {
-                    local_Uk1[j]= local_boundary_function[j]; // Boundary condition, also deals with Nonhomogeneous Dirichlet case
+                    local_Uk1[j]= local_boundary[j]; // Boundary condition, also deals with Nonhomogeneous Dirichlet case
                 }
                 else 
                 {
@@ -154,32 +164,40 @@ int main(int argc, char *argv[])
             
             // Calcolo dell'errore
             double local_sum = 0.0;
-            #pragma omp parallel for reduction(+:local_sum) 
+            double true_local_sum = 0.0;
+            // Per evitare di dover fare due cicli distinti, sommo forcing e boundary
+            // in un unico vettore elemento-per-elemento (sono non nulli in punti diversi)
+
+            #pragma omp parallel for reduction(+:local_sum, true_local_sum) 
             for (std::size_t j = 0; j < local_rows * n; ++j)
             {
                 local_sum += std::pow(local_Uk1[j] - local_Uk[j], 2);
+                true_local_sum += std::pow(local_f[j] - local_true_solution[j], 2);
             } 
 
             MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(&true_local_sum, &true_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             
-            err = std::sqrt(h * sum);
+            errors[n/16] = std::sqrt(h * sum); // n/16 fa schifo, capiamo come cambiarlo
+            true_errors[n/16] = std::sqrt(h * true_sum); // n/16 fa schifo, capiamo come cambiarlo
 
-            if (err < tol)
+            if (errors[n/16] < tol)
             {
                 if (rank == 0) 
                 {
-                    std::cout << "Converged in " << iter + 1 << " iterations with error: " << err << std::endl;
+                    std::cout << "Converged in " << iter + 1 << " iterations with error: " << errors[n/16] << std::endl;
                 }
                 break; 
             }
+
             // Swap Uk and Uk1 for the next iteration: using swap is more efficient than copying the data (O(1) vs O(n^2))
             std::swap(local_Uk, local_Uk1);
 
         }
 
-        if (rank == 0 && err >= tol)
+        if (rank == 0 && errors[n/16] >= tol)
         {
-            std::cout << "Did not converge in " << max_iters << " iterations. Final error: " << err << std::endl;
+            std::cout << "Did not converge in " << max_iters << " iterations. Final error: " << errors[n/16] << std::endl;
         }
 
         std::vector<double> global_Uk;
