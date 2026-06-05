@@ -1,30 +1,31 @@
 #!/bin/bash
 
-# Compila il codice 
 make -C ..
 
-# Parametri di input per il tuo eseguibile
-MATRIX_SIZE=256 # Nota: il tuo main attuale legge argv[1] in 'k' ma poi cicla su un vettore fisso.
+# Input parameters
+MATRIX_SIZE=256 
 FUNC="8*pi^2*sin(2*pi*x)*sin(2*pi*y)"
 BOUND="0"
-EXEC="../main"
+EXEC="../laplace"
 
 # output file
 OUT_FILE="scalability_report.txt"
 
-echo "Inizio test di scalabilità..." > $OUT_FILE
+echo "Start scalability test" > $OUT_FILE
 
 # Test 1: Serial (1 MPI process, 1 OpenMP thread)
 echo "Serial execution: 1 MPI rank, 1 Thread"
 mpirun -np 1 $EXEC $MATRIX_SIZE 1 "$FUNC" "$BOUND" >> $OUT_FILE
 
 # Test 2: Solo MPI (Es: 2 e 4 MPI processes, 1 Thread)
+echo "Testing MPI scalability with 1 Thread"
 for procs in 2 4; do
     echo "Execution with $procs MPI ranks, 1 Thread"
     mpirun -np $procs $EXEC $MATRIX_SIZE 1 "$FUNC" "$BOUND" >> $OUT_FILE
 done
 
 # Test 3: Solo OpenMP ( 1 MPI process, 2 and 4 Threads)
+echo "Testing OpenMP scalability with 1 MPI rank"
 for threads in 2 4; do
     echo "Execution with 1 MPI rank, $threads Threads"
     mpirun -np 1 $EXEC $MATRIX_SIZE $threads "$FUNC" "$BOUND" >> $OUT_FILE

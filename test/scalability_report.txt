@@ -1,0 +1,76 @@
+Start scalability test
+Running for n = 16
+Did not converge in 100000 iterations. Final convergence criterion: 0.417686
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 16
+Elapsed time: 0.223526s
+Running for n = 32
+Did not converge in 100000 iterations. Final convergence criterion: 0.284064
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 32
+Elapsed time: 0.652676s
+Running for n = 64
+Did not converge in 100000 iterations. Final convergence criterion: 0.19823
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 64
+Elapsed time: 2.24731s
+Running for n = 128
+Did not converge in 100000 iterations. Final convergence criterion: 0.139443
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 128
+Elapsed time: 8.87811s
+Running for n = 256
+Did not converge in 100000 iterations. Final convergence criterion: 0.098377
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 256
+Elapsed time: 35.9816s
+Running for n = 16
+Did not converge in 100000 iterations. Final convergence criterion: 0.417686
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 16
+Elapsed time: 0.237541s
+Running for n = 32
+Did not converge in 100000 iterations. Final convergence criterion: 0.284064
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 32
+Elapsed time: 0.469662s
+Running for n = 64
+Did not converge in 100000 iterations. Final convergence criterion: 0.19823
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 64
+Elapsed time: 1.41617s
+Running for n = 128
+Did not converge in 100000 iterations. Final convergence criterion: 0.139443
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 128
+Elapsed time: 4.68974s
+Running for n = 256
+Did not converge in 100000 iterations. Final convergence criterion: 0.098377
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 256
+Elapsed time: 19.8421s
+Running for n = 16
+Did not converge in 100000 iterations. Final convergence criterion: 0.417686
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 16
+Elapsed time: 0.635697s
+Running for n = 32
+Did not converge in 100000 iterations. Final convergence criterion: 0.284064
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 32
+Elapsed time: 0.651926s
+Running for n = 64
+Did not converge in 100000 iterations. Final convergence criterion: 0.19823
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 64
+Elapsed time: 1.64532s
+Running for n = 128
+Did not converge in 100000 iterations. Final convergence criterion: 0.139443
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 128
+Elapsed time: 3.53822s
+Running for n = 256
+Did not converge in 100000 iterations. Final convergence criterion: 0.098377
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 256
+Elapsed time: 13.5755s
