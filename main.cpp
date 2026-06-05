@@ -114,82 +114,97 @@ int main(int argc, char *argv[])
         double local_conv_crit = 0.0;
         double local_error = 0.0;
         double conv_crit = tol + 1.0;   
+        double local_tol = 1e-5;
+        int max_local_iters = 500;
+        
+        std::vector<double> prev_outer_Uk(local_rows * n, 0.0);
 
         for (std::size_t iter = 0; iter < max_iters; ++iter)
         {
-            // Scambio delle righe al bordo (Ghost Nodes)
-            if (rank > 0)
-            {
-                // Manda la prima riga al vicino di sopra, e ricevi la sua ultima riga dentro prerow
+            #pragma omp parallel for
+            for (std::size_t j = 0; j < local_rows * n; ++j) {
+                prev_outer_Uk[j] = local_Uk[j];
+            }
+
+            // 2. Scambio delle righe al bordo (Ghost Nodes fissi per il ciclo interno)
+            if (rank > 0) {
                 MPI_Sendrecv(local_Uk.data(), n, MPI_DOUBLE, rank - 1, 0,
                             prerow_Uk.data(), n, MPI_DOUBLE, rank - 1, 0,
                             MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
-            if (rank < size - 1)
-            {
-                // Manda l'ultima riga al vicino di sotto, e ricevi la sua prima riga dentro postrow
+            if (rank < size - 1) {
                 MPI_Sendrecv(local_Uk.data() + (local_rows - 1) * n, n, MPI_DOUBLE, rank + 1, 0,
                             postrow_Uk.data(), n, MPI_DOUBLE, rank + 1, 0,
                             MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
 
-            // Calcolo di Uk1
-            #pragma omp parallel for 
-            for (std::size_t j = 0; j < local_rows * n; ++j)
+            //risolutore locale (Jacobi) con criteri di convergenza locale
+            double local_inner_crit = local_tol + 1.0;
+            int inner_iter = 0;
+
+            while (local_inner_crit > local_tol && inner_iter < max_local_iters)
             {
-                std::size_t col = j % n;
-                std::size_t global_row = local_start / n + j / n;
+                local_inner_crit = 0.0;
 
-                if(global_row == 0 || global_row == n - 1 || col == 0 || col == n - 1)
+                #pragma omp parallel for 
+                for (std::size_t j = 0; j < local_rows * n; ++j)
                 {
-                    local_Uk1[j]= local_boundary[j]; // Boundary condition, also deals with Nonhomogeneous Dirichlet case
+                    std::size_t col = j % n;
+                    std::size_t global_row = local_start / n + j / n;
+
+                    if(global_row == 0 || global_row == n - 1 || col == 0 || col == n - 1) {
+                        local_Uk1[j] = local_boundary[j]; 
+                    }
+                    else {
+                        double down = (j < n) ? prerow_Uk[col] : local_Uk[j - n];
+                        double up   = (j >= (local_rows - 1) * n) ? postrow_Uk[col] : local_Uk[j + n];
+                        double left  = local_Uk[j - 1];
+                        double right = local_Uk[j + 1];
+
+                        local_Uk1[j] = 0.25 * (left + right + up + down + (h * h) * local_f[j]); 
+                    }
                 }
-                else 
-                {
-                    double down = (j < n) ? prerow_Uk[col] : local_Uk[j - n];
+                
+                // Errore locale interno (per capire la stabilità)
+                #pragma omp parallel for reduction(+:local_inner_crit) 
+                for (std::size_t j = 0; j < local_rows * n; ++j) {
+                    local_inner_crit += std::pow(local_Uk1[j] - local_Uk[j], 2);
+                } 
+                local_inner_crit = std::sqrt(local_inner_crit);
 
-                    // Il vicino "SOPRA" (y maggiore) si trova dopo in memoria (j + n) o nella postrow
-                    double up   = (j >= (local_rows - 1) * n) ? postrow_Uk[col] : local_Uk[j + n];
-
-                    double left  = local_Uk[j - 1];
-                    double right = local_Uk[j + 1];
-
-                    local_Uk1[j] = 0.25 * (left + right + up + down + (h * h) * local_f[j]); 
-
-                }
+                std::swap(local_Uk, local_Uk1);
+                inner_iter++;
             }
-            
-            // Calcolo dell'errore
-            // Per evitare di dover fare due cicli distinti, sommo forcing e boundary
-            // in un unico vettore elemento-per-elemento (sono non nulli in punti diversi)
 
+
+            // controllo di convergenza
+            double local_conv_crit = 0.0;
+            double local_error = 0.0;
+
+            // Confronto la soluzione attuale con prev_outer_Uk, non con la iterazione locale precedente!
             #pragma omp parallel for reduction(+:local_conv_crit, local_error) 
             for (std::size_t j = 0; j < local_rows * n; ++j)
             {
-                local_conv_crit += std::pow(local_Uk1[j] - local_Uk[j], 2);
-                local_error += std::pow(local_Uk1[j] - local_true_solution[j], 2);
+                local_conv_crit += std::pow(local_Uk[j] - prev_outer_Uk[j], 2);
+                local_error += std::pow(local_Uk[j] - local_true_solution[j], 2);
             } 
 
             MPI_Allreduce(&local_conv_crit, &conv_crit, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             MPI_Allreduce(&local_error, &error, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             
-
-            conv_crit = std::sqrt(conv_crit*h);
-            error = std::sqrt(error*h);
-            errors.push_back(std::sqrt(error)); 
+            
+            conv_crit = std::sqrt(h * conv_crit);
+            error = std::sqrt(h * error);
+            
+            errors.push_back(error); 
 
             if (conv_crit < tol)
             {
-                if (rank == 0) 
-                {
-                    std::cout << "Converged in " << iter + 1 << " iterations." << std::endl;
+                if (rank == 0) {
+                    std::cout << "Global convergence reached in " << iter + 1 << " external iterations." << std::endl;
                 }
                 break; 
             }
-
-            // Swap Uk and Uk1 for the next iteration: using swap is more efficient than copying the data (O(1) vs O(n^2))
-            std::swap(local_Uk, local_Uk1);
-
         }
 
         if (rank == 0 && conv_crit >= tol)
