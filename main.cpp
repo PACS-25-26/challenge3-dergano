@@ -45,6 +45,12 @@ int main(int argc, char *argv[])
         num[i] = std::pow(2, i + 4);
     }
 
+    std::size_t max_iters = 100000;
+    double tol = 1e-6;
+    double error = 0.0;
+    std::vector<double> errors;
+    
+
     for (auto &n : num){
 
         std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();    
@@ -103,19 +109,11 @@ int main(int argc, char *argv[])
                     local_f[j] = thread_parser_forcing.Eval();
                 }      
             }
-
-            #pragma omp parallel for
-            for (std::size_t j = 0; j< local_rows * n; ++j) {
-                local_f[j] += local_boundary[j];
-            }
         }
 
-        std::size_t max_iters = 100000;
-        double tol = 1e-6;
-        std::vector<double> errors;
-        std::vector<double> true_errors;
-        double sum = 0.0;
-        double true_sum = 0.0;
+        double local_conv_crit = 0.0;
+        double local_error = 0.0;
+        double conv_crit = tol + 1.0;   
 
         for (std::size_t iter = 0; iter < max_iters; ++iter)
         {
@@ -162,29 +160,26 @@ int main(int argc, char *argv[])
             }
             
             // Calcolo dell'errore
-            double local_sum = 0.0;
-            double true_local_sum = 0.0;
             // Per evitare di dover fare due cicli distinti, sommo forcing e boundary
             // in un unico vettore elemento-per-elemento (sono non nulli in punti diversi)
 
-            #pragma omp parallel for reduction(+:local_sum, true_local_sum) 
+            #pragma omp parallel for reduction(+:local_conv_crit, local_error) 
             for (std::size_t j = 0; j < local_rows * n; ++j)
             {
-                local_sum += std::pow(local_Uk1[j] - local_Uk[j], 2);
-                true_local_sum += std::pow(local_f[j] - local_true_solution[j], 2);
+                local_conv_crit += std::pow(local_Uk1[j] - local_Uk[j], 2);
+                local_error += std::pow(local_Uk1[j] - local_true_solution[j], 2);
             } 
 
-            MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-            MPI_Allreduce(&true_local_sum, &true_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(&local_conv_crit, &conv_crit, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(&local_error, &error, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             
-            errors.push_back(std::sqrt(h * sum));
-            true_errors.push_back(std::sqrt(h * true_sum));
+            errors.push_back(std::sqrt(error)); 
 
-            if (errors.back() < tol)
+            if (conv_crit < tol)
             {
                 if (rank == 0) 
                 {
-                    std::cout << "Converged in " << iter + 1 << " iterations with error: " << errors.back() << std::endl;
+                    std::cout << "Converged in " << iter + 1 << " iterations." << std::endl;
                 }
                 break; 
             }
@@ -194,9 +189,9 @@ int main(int argc, char *argv[])
 
         }
 
-        if (rank == 0 && errors.back() >= tol)
+        if (rank == 0 && conv_crit >= tol)
         {
-            std::cout << "Did not converge in " << max_iters << " iterations. Final error: " << errors.back() << std::endl;
+            std::cout << "Did not converge in " << max_iters << " iterations. Final convergence criterion: " << conv_crit << std::endl;
         }
 
         std::vector<double> global_Uk;
