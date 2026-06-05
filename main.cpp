@@ -103,17 +103,17 @@ int main(int argc, char *argv[])
                     local_f[j] = thread_parser_forcing.Eval();
                 }      
             }
-            
+
             #pragma omp parallel for
             for (std::size_t j = 0; j< local_rows * n; ++j) {
                 local_f[j] += local_boundary[j];
             }
         }
 
-        std::size_t max_iters = 10000;
+        std::size_t max_iters = 100000;
         double tol = 1e-6;
-        std::vector<double> errors(num.size(), tol + 1.0);
-        std::vector<double> true_errors(num.size(), 0.0);
+        std::vector<double> errors;
+        std::vector<double> true_errors;
         double sum = 0.0;
         double true_sum = 0.0;
 
@@ -158,7 +158,6 @@ int main(int argc, char *argv[])
 
                     local_Uk1[j] = 0.25 * (left + right + up + down + (h * h) * local_f[j]); 
 
-    
                 }
             }
             
@@ -178,14 +177,14 @@ int main(int argc, char *argv[])
             MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             MPI_Allreduce(&true_local_sum, &true_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             
-            errors[n/16] = std::sqrt(h * sum); // n/16 fa schifo, capiamo come cambiarlo
-            true_errors[n/16] = std::sqrt(h * true_sum); // n/16 fa schifo, capiamo come cambiarlo
+            errors.push_back(std::sqrt(h * sum));
+            true_errors.push_back(std::sqrt(h * true_sum));
 
-            if (errors[n/16] < tol)
+            if (errors.back() < tol)
             {
                 if (rank == 0) 
                 {
-                    std::cout << "Converged in " << iter + 1 << " iterations with error: " << errors[n/16] << std::endl;
+                    std::cout << "Converged in " << iter + 1 << " iterations with error: " << errors.back() << std::endl;
                 }
                 break; 
             }
@@ -195,9 +194,9 @@ int main(int argc, char *argv[])
 
         }
 
-        if (rank == 0 && errors[n/16] >= tol)
+        if (rank == 0 && errors.back() >= tol)
         {
-            std::cout << "Did not converge in " << max_iters << " iterations. Final error: " << errors[n/16] << std::endl;
+            std::cout << "Did not converge in " << max_iters << " iterations. Final error: " << errors.back() << std::endl;
         }
 
         std::vector<double> global_Uk;
