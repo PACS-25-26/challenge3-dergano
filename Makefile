@@ -6,7 +6,7 @@ LDLIBS = -lmuparser
 # name of the executable
 TARGET = laplace
 
-SRCS = main.cpp 
+SRCS = src/main.cpp 
 OBJS = $(SRCS:.cpp=.o)
 
 all: $(TARGET)
