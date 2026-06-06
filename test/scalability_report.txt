@@ -1,0 +1,190 @@
+Start scalability test
+
+Serial execution: 1 MPI rank, 1 Thread
+Running for n = 16
+Global convergence reached in 37 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 16
+Elapsed time: 0.00200034s
+Running for n = 32
+Global convergence reached in 144 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 32
+Elapsed time: 0.00569294s
+Running for n = 64
+Global convergence reached in 524 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 64
+Elapsed time: 0.0541822s
+Running for n = 128
+Global convergence reached in 1838 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 128
+Elapsed time: 0.691378s
+Running for n = 256
+Global convergence reached in 6240 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 256
+Elapsed time: 10.1373s
+
+Testing MPI scalability with 1 Thread
+Execution with 2 MPI ranks, 1 Thread
+Running for n = 16
+Global convergence reached in 21 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 16
+Elapsed time: 0.00218863s
+Running for n = 32
+Global convergence reached in 26 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 32
+Elapsed time: 0.0067007s
+Running for n = 64
+Global convergence reached in 376 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 64
+Elapsed time: 0.0280882s
+Running for n = 128
+Global convergence reached in 2118 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 128
+Elapsed time: 0.381952s
+Running for n = 256
+Global convergence reached in 7369 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 256
+Elapsed time: 5.37727s
+Execution with 4 MPI ranks, 1 Thread
+Running for n = 16
+Global convergence reached in 64 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 16
+Elapsed time: 0.00189365s
+Running for n = 32
+Global convergence reached in 214 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 32
+Elapsed time: 0.0126894s
+Running for n = 64
+Global convergence reached in 731 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 64
+Elapsed time: 0.0662958s
+Running for n = 128
+Global convergence reached in 2520 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 128
+Elapsed time: 0.536182s
+Running for n = 256
+Global convergence reached in 8698 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 256
+Elapsed time: 4.99007s
+
+Testing OpenMP scalability with 1 MPI rank
+Execution with 1 MPI rank, 2 Threads
+Running for n = 16
+Global convergence reached in 37 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 16
+Elapsed time: 0.00681886s
+Running for n = 32
+Global convergence reached in 144 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 32
+Elapsed time: 0.0265199s
+Running for n = 64
+Global convergence reached in 524 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 64
+Elapsed time: 0.123987s
+Running for n = 128
+Global convergence reached in 1838 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 128
+Elapsed time: 1.01206s
+Running for n = 256
+Global convergence reached in 6240 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 256
+Elapsed time: 11.3318s
+Execution with 1 MPI rank, 4 Threads
+Running for n = 16
+Global convergence reached in 37 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 16
+Elapsed time: 0.0178396s
+Running for n = 32
+Global convergence reached in 144 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 32
+Elapsed time: 0.0613629s
+Running for n = 64
+Global convergence reached in 524 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 64
+Elapsed time: 0.263271s
+Running for n = 128
+Global convergence reached in 1838 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 128
+Elapsed time: 1.57353s
+Running for n = 256
+Global convergence reached in 6240 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 256
+Elapsed time: 13.1885s
+
+Hybrid execution: 2 MPI ranks, 2 Threads
+Running for n = 16
+Global convergence reached in 21 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 16
+Elapsed time: 0.0237795s
+Running for n = 32
+Global convergence reached in 26 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 32
+Elapsed time: 0.0617896s
+Running for n = 64
+Global convergence reached in 376 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 64
+Elapsed time: 0.108072s
+Running for n = 128
+Global convergence reached in 2118 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 128
+Elapsed time: 0.756526s
+Running for n = 256
+Global convergence reached in 7369 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 256
+Elapsed time: 6.91599s
+Hybrid execution: 3 MPI ranks, 2 Threads
+Running for n = 16
+Global convergence reached in 69 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 16
+Elapsed time: 0.312069s
+Running for n = 32
+Global convergence reached in 207 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 32
+Elapsed time: 0.258325s
+Running for n = 64
+Global convergence reached in 692 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 64
+Elapsed time: 0.823964s
+Running for n = 128
+Global convergence reached in 2367 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 128
+Elapsed time: 2.55122s
+Running for n = 256
+Global convergence reached in 8080 external iterations.
+Risultato esportato in laplace_solution.vtk
+Parallel execution completed for n = 256
+Elapsed time: 16.7058s
+
