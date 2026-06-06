@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     }
 
     std::size_t max_iters = 100000;
-    double tol = 1e-10;
+    double tol = 1e-6;
     double error = 0.0;
     std::vector<double> errors;
     std::vector<double> global_errors;
@@ -115,8 +115,8 @@ int main(int argc, char *argv[])
         }
 
         double conv_crit = tol + 1.0;   
-        double local_tol = 1e-9;
-        int max_local_iters = 500;
+        double local_tol = 1e-4;
+        int max_local_iters = 100;
         
         std::vector<double> prev_outer_Uk(local_rows * n, 0.0);
 
@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
         std::cout << "----------------------------------------------------\n";
         
         for (std::size_t i = 0; i < num.size(); ++i) {
-            double current_h = 1.0 / (num[i] - 1); // Ricalcoliamo h per la stampa
+            double current_h = 1.0 / (num[i] - 1); 
             std::cout << std::setw(10) << num[i] << " | "
                       << std::setw(15) << std::fixed << current_h << " | "
                       << std::setw(20) << std::scientific << global_errors[i] << "\n";
