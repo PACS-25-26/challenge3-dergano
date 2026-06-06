@@ -41,8 +41,8 @@ int main(int argc, char *argv[])
     
 
     std::vector<std::size_t> num(5);
-    for (int i = 0; i < 5; ++i){
-        num[i] = std::pow(2, i + 4);
+    for (int i = k; i < 5 + k; ++i){
+        num[i] = std::pow(2, i);
     }
 
     std::size_t max_iters = 100000;
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
                 prev_outer_Uk[j] = local_Uk[j];
             }
 
-            // 2. Scambio delle righe al bordo (Ghost Nodes fissi per il ciclo interno)
+            // Scambio delle righe al bordo (Ghost Nodes fissi per il ciclo interno)
             if (rank > 0) {
                 MPI_Sendrecv(local_Uk.data(), n, MPI_DOUBLE, rank - 1, 0,
                             prerow_Uk.data(), n, MPI_DOUBLE, rank - 1, 0,
