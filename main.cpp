@@ -7,6 +7,7 @@
 #include <cmath>
 #include <omp.h>
 #include "muParser.h"
+#include <iomanip>
 
 
 double uexact(double x, double y);
@@ -50,6 +51,7 @@ int main(int argc, char *argv[])
     double tol = 1e-6;
     double error = 0.0;
     std::vector<double> errors;
+    std::vector<double> global_errors;
     
 
     for (auto &n : num){
@@ -201,6 +203,7 @@ int main(int argc, char *argv[])
             {
                 if (rank == 0) {
                     std::cout << "Global convergence reached in " << iter + 1 << " external iterations." << std::endl;
+                    std::cout << "Final convergence error: " << error << std::endl;
                 }
                 break; 
             }
@@ -217,6 +220,7 @@ int main(int argc, char *argv[])
 
         if (rank == 0)
         {
+            
             global_Uk.resize(n * n); 
             int current_j = 0;
             
@@ -267,7 +271,24 @@ int main(int argc, char *argv[])
             std::chrono::duration<double> elapsed_seconds = end - start;
             std::cout << "Parallel execution completed for n = " << n << std::endl;
             std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
+            global_errors.push_back(error);
         }          
+    }
+
+    if (rank == 0) {
+        std::cout << "\n====================================================\n";
+        std::cout << std::setw(10) << "n" << " | "
+                  << std::setw(15) << "h" << " | "
+                  << std::setw(20) << "L2 Error" << "\n";
+        std::cout << "----------------------------------------------------\n";
+        
+        for (std::size_t i = 0; i < num.size(); ++i) {
+            double current_h = 1.0 / (num[i] - 1); // Ricalcoliamo h per la stampa
+            std::cout << std::setw(10) << num[i] << " | "
+                      << std::setw(15) << std::fixed << current_h << " | "
+                      << std::setw(20) << std::scientific << global_errors[i] << "\n";
+        }
+        std::cout << "====================================================\n";
     }
 
     MPI_Finalize();
