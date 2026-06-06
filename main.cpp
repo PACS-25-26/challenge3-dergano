@@ -27,13 +27,14 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
         }    
     
-    int k;
+    int k = 0;
     int num_threads;
     if (rank == 0){
         k = std::stoi(argv[1]);
         num_threads = std::stoi(argv[2]);
     }
     MPI_Bcast(&num_threads, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&k, 1, MPI_INT, 0, MPI_COMM_WORLD);
     omp_set_num_threads(num_threads);
 
     std::string f = argv[3];
@@ -42,7 +43,7 @@ int main(int argc, char *argv[])
 
     std::vector<std::size_t> num(5);
     for (int i = k; i < 5 + k; ++i){
-        num[i] = std::pow(2, i);
+        num[i-k] = std::pow(2, i);
     }
 
     std::size_t max_iters = 100000;
