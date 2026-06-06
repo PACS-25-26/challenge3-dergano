@@ -3,7 +3,7 @@
 make -C ..
 
 # Input parameters
-MATRIX_SIZE=256 
+MATRIX_SIZE=4 
 FUNC="8*pi^2*sin(2*pi*x)*sin(2*pi*y)"
 BOUND="0"
 EXEC="../laplace"
@@ -34,5 +34,7 @@ echo "" >> $OUT_FILE
 # Test 4: Ibrido (Es: 2 MPI processes, 2 Threads)
 echo "Hybrid execution: 2 MPI ranks, 2 Threads">>$OUT_FILE
 mpirun -np 2 $EXEC $MATRIX_SIZE 2 "$FUNC" "$BOUND" >> $OUT_FILE
+echo "Hybrid execution: 3 MPI ranks, 2 Threads">>$OUT_FILE
+mpirun -np 3 $EXEC $MATRIX_SIZE 2 "$FUNC" "$BOUND" >> $OUT_FILE
 echo "" >> $OUT_FILE
 echo "End of tests. Scalability report saved to $OUT_FILE"
