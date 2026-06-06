@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
         }
 
         double conv_crit = tol + 1.0;   
-        double local_tol = 1e-5;
-        int max_local_iters = 500;
+        double local_tol = 1e-4;
+        int max_local_iters = 100;
         
         std::vector<double> prev_outer_Uk(local_rows * n, 0.0);
 
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
             MPI_Allreduce(&local_conv_crit, &conv_crit, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             MPI_Allreduce(&local_error, &error, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             
-            
+
             conv_crit = std::sqrt(h * conv_crit);
             error = std::sqrt(h * error);
             
